@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sq.modules.rechargeable.dao.RechargeableMgrDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.sq.modules.rechargeable.entity.RechargeableMgrEntity" id="rechargeableMgrMap">
+        <result property="id" column="id"/>
+        <result property="batchNumber" column="batch_number"/>
+        <result property="title" column="title"/>
+        <result property="faceValue" column="face_value"/>
+        <result property="count" column="count"/>
+        <result property="startDate" column="start_date"/>
+        <result property="duration" column="duration"/>
+        <result property="bdId" column="bd_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="createId" column="create_id"/>
+        <result property="updateId" column="update_id"/>
+        <result property="remarks" column="remarks"/>
+        <result property="version" column="version"/>
+        <result property="enable" column="enable"/>
+    </resultMap>
+
+<!--    &lt;!&ndash; 条件查询 &ndash;&gt;
+    <select id="selectPageVo"  resultType="com.sq.modules.rechargeable.entity.RechargeableCardEntityVo">
+
+        SELECT
+        m.title AS title,
+        r.batch_no AS batch_no,
+        r.sequence AS sequence,
+        m.face_value AS face_value,
+        r.card_no AS card_no,
+        r.card_pwd AS card_pwd,
+        r.activation_state AS activation_state,
+        b.NAME AS bd_name,
+        m.duration as duration,
+        r.failure_time AS failure_time,
+        m.start_date AS start_time
+        FROM
+        b_rechargeable_mgr m
+        INNER JOIN b_rechargeable_card r ON r.manager_id = m.id
+        INNER JOIN b_bd_mgr b ON m.bd_id = b.id
+        <where>
+            <if test="activationState != null">
+                r.activation_state = #{activationState}
+            </if>
+            <if test="bdId != null">
+                AND m.bd_id = #{bdId}
+            </if>
+            <if test="batchNo != null and batchNo != '' ">
+                AND r.batch_no = #{batchNo}
+            </if>
+        </where>
+
+    </select>-->
+
+
+    <!-- 条件查询 -->
+    <select id="selectPageVo"  resultType="com.sq.modules.rechargeable.entity.RechargeableCardEntityVo">
+
+        SELECT
+        m.title AS title,
+        r.batch_no AS batch_no,
+        r.sequence AS sequence,
+        m.face_value AS face_value,
+        r.card_no AS card_no,
+        r.card_pwd AS card_pwd,
+        r.activation_state AS activation_state,
+        b.NAME AS bd_name,
+        m.duration as duration,
+        r.failure_time AS failure_time,
+        m.start_date AS start_time,
+        date_format(r.create_time, '%Y-%m-%d') as create_time
+        FROM
+
+        b_rechargeable_card r
+        INNER JOIN b_rechargeable_mgr m ON r.manager_id = m.id
+        INNER JOIN b_bd_mgr b ON r.bd_id = b.id
+        <where>
+            <if test="activationState != null">
+                r.activation_state = #{activationState}
+            </if>
+            <if test="bdId != null">
+                AND r.bd_id = #{bdId}
+            </if>
+            <if test="batchNo != null and batchNo != '' ">
+                AND r.batch_no = #{batchNo}
+            </if>
+        </where>
+        ORDER BY r.create_time DESC
+    </select>
+
+    <update id="updateBd">
+        UPDATE b_rechargeable_card
+        SET bd_id = #{bdId},update_time=now(),update_id=#{userId}
+        WHERE
+        sequence BETWEEN #{beginSequence}
+        AND #{endSequence}
+    </update>
+
+
+</mapper>

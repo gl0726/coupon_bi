@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sq.modules.bi.dao.BIIntegralDao">
+
+    <!-- 基本概况- 生成卡数统计 -->
+    <select id="getYesterdayTrading" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.Transaction">
+        SELECT
+            number_order,
+            count_order,
+            number_payment,
+            count_payment,
+            order_amount,
+            guest_unit_price,
+            payment_amount,
+            quantity_payment,
+            refund_amount,
+            after_sale_order,
+            registered_users,
+            product_component,
+            point_collection
+        FROM
+          dm.trading_situation_yesterday
+        where (code = #{code} or id = #{id})
+    </select>
+
+    <!-- 数据统计订单流水开始 -->
+    <select id="getOrderDataYear" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.OrderData">
+        SELECT
+            create_time,
+            store_code,
+            order_quantity,
+            successful_orders,
+            after_sale_orders
+        FROM
+          dm.order_store_year_for_haopingou
+        where store_code = #{code}
+    </select>
+
+    <select id="getPipelineDataYear" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.PipelineData">
+        SELECT
+        create_time,
+        store_code,
+        order_amount,
+        successful_orders_amount,
+        after_sale_orders_amount
+        FROM
+        dm.order_store_amount_year_for_haopingou
+        where store_code = #{code}
+    </select>
+
+    <select id="getOrderDataMonth" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.OrderData">
+        SELECT
+        create_time,
+        store_code,
+        order_quantity,
+        successful_orders,
+        after_sale_orders
+        FROM
+        dm.order_store_month_for_haopingou
+        where store_code = #{code} and create_time &gt;= #{startMohth} and create_time &lt;= #{endMohth}
+    </select>
+
+    <select id="getPipelineDataMonth" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.PipelineData">
+        SELECT
+        create_time,
+        store_code,
+        order_amount,
+        successful_orders_amount,
+        after_sale_orders_amount
+        FROM
+        dm.order_store_amount_month_for_haopingou
+        where store_code = #{code} and create_time &gt;= #{startMohth} and create_time &lt;= #{endMohth}
+    </select>
+
+    <select id="getOrderDataDay" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.OrderData">
+        SELECT
+        create_time,
+        store_code,
+        order_quantity,
+        successful_orders,
+        after_sale_orders
+        FROM
+        dm.order_store_day_for_haopingou
+        where store_code = #{code} and create_time &gt;= #{startDay} and create_time &lt;= #{endDay}
+    </select>
+
+    <select id="getPipelineDataDay" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.PipelineData">
+        SELECT
+        create_time,
+        store_code,
+        order_amount,
+        successful_orders_amount,
+        after_sale_orders_amount
+        FROM
+        dm.order_store_amount_day_for_haopingou
+        where store_code = #{code} and create_time &gt;= #{startDay} and create_time &lt;= #{endDay}
+    </select>
+
+    <!-- 数据统计订单流水结束 -->
+
+    <!-- 商品销售排行前20  开始 -->
+    <select id="getCommoditySalesRankingSum" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.Goods">
+        SELECT
+          row_numbers,
+          pic,
+          mp_code,
+          pro_name,
+          price,
+          counts
+        FROM
+          dm.points_mall_best_sellers_w_all
+        where (store_code = #{code} or store_id = #{id})
+    </select>
+
+    <select id="getCommoditySalesRankingYear" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.Goods">
+        SELECT
+        row_numbers,
+        pic,
+        mp_code,
+        pro_name,
+        price,
+        counts
+        FROM
+        dm.points_mall_best_sellers_w_year
+        where (store_code = #{code} or store_id = #{id}) and the_date like concat(#{year},'%')
+    </select>
+
+    <select id="getCommoditySalesRankingMonth" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.Goods">
+        SELECT
+        row_numbers,
+        pic,
+        mp_code,
+        pro_name,
+        price,
+        counts
+        FROM
+        dm.points_mall_best_sellers_w_month
+        where (store_code = #{code} or store_id = #{id}) and the_date like concat(#{month},'%')
+    </select>
+
+    <select id="getCommoditySalesRankingWeek" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.Goods">
+        SELECT
+        row_numbers,
+        pic,
+        mp_code,
+        pro_name,
+        price,
+        counts
+        FROM
+        dm.points_mall_best_sellers_w_week
+        where (store_code = #{code} or store_id = #{id}) and the_date = #{week}
+    </select>
+    <!-- 商品销售排行前20  结束 -->
+
+    <!-- 用户统计开始 -->
+    <select id="getUserStatisticsYear" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.UserCollect">
+        SELECT
+          left(the_date, 4) as the_date,
+          reg_user_num,
+          order_user_num,
+          all_user_num
+        FROM
+        dm.points_mall_user_report
+        where (store_code = #{code} or store_id = #{id}) and date_type = #{date}
+    </select>
+
+    <select id="getUserStatisticsMonth" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.UserCollect">
+        SELECT
+        left(the_date, 7) as the_date,
+        reg_user_num,
+        order_user_num,
+        all_user_num
+        FROM
+        dm.points_mall_user_report
+        where (store_code = #{code} or store_id = #{id}) and date_type = #{date} and the_date &gt;= #{startMohth} and the_date &lt;= #{endMohth}
+    </select>
+
+    <select id="getUserStatisticsDay" parameterType ="com.sq.modules.bi.entity.shop.Parameter" resultType="com.sq.modules.bi.entity.shop.UserCollect">
+        SELECT
+        the_date,
+        reg_user_num,
+        order_user_num,
+        all_user_num
+        FROM
+        dm.points_mall_user_report
+        where (store_code = #{code} or store_id = #{id}) and date_type = #{date} and the_date &gt;= #{startDay} and the_date &lt;= #{endDay}
+    </select>
+    <!-- 用户统计结束 -->
+
+    <!-- 销售种类统计开始 -->
+    <select id="getSalesTypeStatistics" parameterType ="com.sq.modules.bi.entity.shop.ParameterTwo" resultType="com.sq.modules.bi.entity.shop.SalesTypeStatistics">
+        SELECT
+            sale_type,
+            sum( order_item_count_price ) AS payment_amount,
+            CONVERT ((( sum( order_item_count_price ) /
+            ( SELECT
+            sum( order_item_count_price )
+            FROM goodbuy_points_mall_sales_categories_w_day
+            WHERE (store_code = #{code} or store_id = #{id}) AND (the_day BETWEEN #{start} AND #{end}) ) ) * 100),
+            DECIMAL ( 15, 1 )
+            ) AS payments_than
+        FROM
+            goodbuy_points_mall_sales_categories_w_day
+        WHERE
+            (store_code = #{code} or store_id = #{id})
+            AND (the_day BETWEEN #{start} AND #{end})
+        GROUP BY
+            sale_type
+        ORDER BY
+            payments_than DESC
+    </select>
+    <!-- 销售种类统计结束 -->
+
+    <!-- 用户统计-下单统计开始 -->
+    <select id="getUserOrderStatistics" parameterType ="com.sq.modules.bi.entity.shop.ParameterTwo" resultType="com.sq.modules.bi.entity.shop.UserOrderStatistics">
+        select
+            username,
+            mobile,
+            SUBSTRING_INDEX(address,' ',1) as province,
+            address,
+            order_counts,
+            total_price,
+            #{date} as the_date
+        from points_mall_user_order_report
+        where (store_code = #{code} or store_id = #{id}) and the_date like concat(#{date},'%') order by order_counts desc limit 10
+    </select>
+    <!-- 用户统计-下单统计结束 -->
+
+</mapper>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sq.modules.customer.dao.CustomerLevelDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.sq.modules.customer.entity.CustomerLevelEntity" id="customerLevelMap">
+        <result property="id" column="id"/>
+        <result property="customerId" column="customer_id"/>
+        <result property="code" column="code"/>
+        <result property="name" column="name"/>
+        <result property="minScore" column="min_score"/>
+        <result property="maxScore" column="max_score"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="createId" column="create_id"/>
+        <result property="updateId" column="update_id"/>
+        <result property="remarks" column="remarks"/>
+        <result property="version" column="version"/>
+        <result property="enable" column="enable"/>
+    </resultMap>
+
+
+</mapper>

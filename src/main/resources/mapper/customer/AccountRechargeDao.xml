@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sq.modules.customer.dao.AccountRechargeDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.sq.modules.customer.entity.AccountRechargeEntity" id="accountRechargeMap">
+        <result property="id" column="ID"/>
+        <result property="wealthId" column="wealth_id"/>
+        <result property="rechargeCardno" column="recharge_cardno"/>
+        <result property="rechargeAmount" column="recharge_amount"/>
+        <result property="rechargeTime" column="recharge_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="createId" column="create_id"/>
+        <result property="updateId" column="update_id"/>
+        <result property="remarks" column="remarks"/>
+        <result property="version" column="version"/>
+        <result property="enable" column="enable"/>
+    </resultMap>
+
+
+    <resultMap type="com.sq.modules.customer.entity.vo.AccountRechargeVo" id="joinAccountRechargeMap">
+        <result property="rechargeTime" column="recharge_time"/>
+    </resultMap>
+
+    <resultMap type="com.sq.modules.customer.entity.vo.RechargeDetailVo" id="rechargeDetailMap">
+        <result column="title" property="title"/>
+        <result column="recharge_amount" property="rechargeAmount"/>
+        <result column="recharge_cardno" property="cardNo"/>
+    </resultMap>
+
+    <!-- 条件查询 -->
+    <select id="selectPageByVo" resultMap="joinAccountRechargeMap">
+        SELECT
+        DATE_FORMAT(recharge_time, '%Y-%m-%d') AS recharge_time
+        FROM
+        b_account_recharge
+        WHERE
+        ENABLE = 1
+        <if test="wealthId != null and wealthId !=''">
+            AND
+            wealth_id = #{wealthId}
+        </if>
+        GROUP BY
+        DATE_FORMAT(recharge_time, '%Y-%m-%d')
+    </select>
+
+    <select id="selectRechargeDatail" resultMap="rechargeDetailMap">
+        SELECT
+        recharge_cardno,
+        max(t2.title) AS title,
+        recharge_amount,
+        wealth_id
+        FROM
+        b_account_recharge t
+        JOIN b_rechargeable_card t1 ON t.recharge_cardno = t1.card_no
+        JOIN b_rechargeable_mgr t2 ON t1.manager_id = t2.id
+        WHERE
+        t. ENABLE = 1
+        AND t1. ENABLE = 1
+        AND t2. ENABLE = 1
+        <if test="wealthId != null and wealthId !=''">
+            AND
+            wealth_id = #{wealthId}
+        </if>
+        <if test="rechargeTime != null and rechargeTime !=''">
+            AND
+            DATE_FORMAT(t.recharge_time, '%Y-%m-%d') = #{rechargeTime}
+        </if>
+        GROUP BY
+        recharge_cardno,
+        recharge_amount,
+        t.wealth_id
+    </select>
+
+</mapper>

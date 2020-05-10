@@ -1,0 +1,2071 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sq.modules.bi.dao.DailyAllMakeCardDao">
+
+    <!-- 基本概况- 生成卡数统计 -->
+    <select id="getMaxMakeCard" resultType="com.sq.modules.bi.entity.DailyAllMakeCard">
+        SELECT
+          *
+        FROM
+          daily_all_make_card
+        ORDER  BY create_time DESC limit 1
+    </select>
+
+    <!-- 基本概况- 激活卡数总统计 -->
+    <select id="getMaxActivateCard" resultType="com.sq.modules.bi.entity.DailyAllActivateCard">
+        SELECT
+          *
+        FROM
+        daily_all_activate_card
+        ORDER  BY create_time DESC limit 1
+    </select>
+
+    <!-- 基本概况- 兑换金额总统计/兑换人总统计/人均兑换金额 -->
+    <select id="getMaxExchangeInfor" resultType="com.sq.modules.bi.entity.DailyExchangeInformation">
+        SELECT
+          *
+        FROM
+          daily_exchange_information
+        ORDER  BY create_time DESC limit 1
+    </select>
+
+    <!-- 基本概况- 注册会员数 -->
+    <select id="getTotalUser" resultType="com.sq.modules.bi.entity.DailyRegisteredUser">
+        SELECT
+          *
+        FROM
+          daily_registered_user
+        ORDER  BY create_time DESC limit 1
+    </select>
+
+    <!-- 基本概况- 会员总余额  -->
+    <select id="getTotalUserBalance" resultType="com.sq.modules.bi.entity.DailyRegisteredUserBalance">
+        SELECT
+          *
+        FROM
+          daily_registered_user_balance
+        ORDER  BY create_time DESC limit 1
+    </select>
+
+    <!-- 首页-基本概况-激活人数/兑换人数（个）  -->
+    <select id="getAE" resultType="com.sq.modules.bi.entity.ActivateExchange">
+        SELECT
+          *
+        FROM
+          exchanged_and_activate_count
+        ORDER  BY create_time DESC limit 1
+    </select>
+
+    <!-- 首页-基本概况-支付金额/支付人数/支付笔数/客单价（个）  -->
+    <select id="getUP" resultType="com.sq.modules.bi.entity.UserPayment">
+        SELECT
+        *
+        FROM
+        payment_statistics
+        ORDER  BY create_time DESC limit 1
+    </select>
+
+    <!-- 首页-基本概况-预估佣金(元)  -->
+    <select id="getEC" resultType="com.sq.modules.bi.entity.EstimatedCommission">
+        SELECT
+        *
+        FROM
+        all_estimate_price
+        ORDER  BY create_time DESC limit 1
+    </select>
+
+    <!-- 首页-基本概况-结算佣金/已结算订单(个)/人均结算佣金  -->
+    <select id="getUS" resultType="com.sq.modules.bi.entity.UserSettlement">
+        SELECT
+        *
+        FROM
+        all_settle_accounts_price
+        ORDER  BY create_time DESC limit 1
+    </select>
+
+
+    <!-- 生成卡各面值金额占比分析- 普通卡  -->
+    <select id="getOrdinaryCardRate" parameterType="string" resultType="com.sq.modules.bi.entity.OrdinaryCard">
+        SELECT
+          face_value,total_count
+        FROM
+         ordinary_card
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 生成卡各面值金额占比分析- 定制卡  -->
+    <select id="getCustomCardRate"  parameterType="string" resultType="com.sq.modules.bi.entity.CustomCard">
+        SELECT
+          face_value,total_count
+        FROM
+          custom_card
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 各平台优惠券兑换情况分析 - 各抵扣平台的兑换金额/人数  -->
+    <select id="getPlatformAnalyze"  parameterType="string" resultType="com.sq.modules.bi.entity.PlatformCouponExchange">
+        SELECT
+          case
+            when deduction = 0 then '自营'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+          else '未知'
+          end deduction,
+          total_amount,
+          total_customer
+        FROM
+         platform_coupon_exchange
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 优惠券兑换频次人数分布情况  -->
+    <select id="getFrequencyAnalyze"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangeFrequency">
+        SELECT
+          deduction_count,
+          total_customer
+        FROM
+          exchange_frequency
+        where create_time = #{createTime}
+        ORDER BY  rank_num
+    </select>
+
+    <!-- 优惠券兑换频次人数分布情况  -->
+    <select id="getSkuAnalyze"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangedGoodsRank">
+        SELECT
+            sku_id,
+            sku_name,
+            case
+            when deduction = 0 then '自营'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+            else '未知'
+            end deduction,
+            sku_count,
+            row_num
+        FROM
+          exchanged_goods_rank
+        where create_time = #{createTime}
+        order by row_num
+    </select>
+
+    <!-- ..........................兑换金额 开始............................. -->
+    <!-- 兑换金额 - 某日数据 -->
+    <select id="getExchangeCard"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_hr as theTime,
+            total_amount as totalCount
+        FROM
+          exchange_card_yesterday
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 兑换金额 - 某日总数 平均数 -->
+    <select id="getExchangeCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            data_time as create_time,
+            sum(total_amount) as activieTotal,
+            round(sum(total_amount)/24,4) as avgAmount
+        FROM
+          exchange_card_yesterday
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 兑换金额 - 7日数据 -->
+    <select id="get7ExchangeCard"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_day as theTime,
+            total_amount as totalCount
+        FROM
+          exchange_card_seven
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 兑换金额 - 7日总数 平均数 -->
+    <select id="get7ExchangeCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            max(scope) as createTime,
+            sum(total_amount) as activieTotal,
+            round(sum(total_amount)/7,4) as avgAmount
+        FROM
+          exchange_card_seven
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 兑换金额 - 上一7个日总数 平均数 -->
+    <select id="getNext7ExchangeCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            sum(total_amount) as activieTotal
+        FROM
+          exchange_card_next_seven
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 兑换金额 - 30日数据 -->
+    <select id="get30ExchangeCard"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_day as theTime,
+            total_amount as totalCount
+        FROM
+          exchange_card_thirty
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 兑换金额 - 30日总数 平均数 -->
+    <select id="get30ExchangeCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            max(scope) as createTime,
+            sum(total_amount) as activieTotal,
+            round(sum(total_amount)/30,4) as avgAmount
+        FROM
+          exchange_card_thirty
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 兑换金额 - 上一30个日总数 -->
+    <select id="getNext30ExchangeCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            sum(total_amount) as activieTotal
+        FROM
+          exchange_card_next_thirty
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 兑换金额 - 某月数据 -->
+    <select id="getMonthExchangeCard"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_month as theTime,
+            total_amount as totalCount
+        FROM
+          exchange_card_month
+        where the_month = #{theMonth}
+    </select>
+
+    <!-- 兑换金额 - 12个月平均数 -->
+    <select id="get12MonthExchangeCardAvg"  parameterType="map" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            concat_ws('--',min(the_month),max(the_month)) as createTime,
+            round(sum(total_amount)/12 ,4)as avgAmount
+        FROM
+          exchange_card_month
+        where the_month  &gt;= #{beginMonth}
+        and   the_month  &lt;= #{endMonth}
+    </select>
+
+    <!-- 兑换金额 - 12个月数据 -->
+    <select id="get12MonthExchangeCard"  parameterType="map" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_month as theTime,
+            total_amount as totalCount
+        FROM
+          exchange_card_month
+        where the_month  &gt;= #{beginMonth}
+        and   the_month  &lt;= #{endMonth}
+        order by the_month
+    </select>
+
+    <!-- ..........................兑换金额 结束............................. -->
+
+    <!-- ..........................激活金额 开始............................. -->
+    <!-- 激活金额 - 某日数据 -->
+    <select id="getActiveCard"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_hr as theTime,
+            total_amount as totalCount
+        FROM
+          activated_card_yesterday
+        where data_time = #{dataTime}
+    </select>
+
+    <!-- 激活金额 - 某日总数 平均数 -->
+    <select id="getActiveCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            data_time as createTime,
+            sum(total_amount) as activieTotal,
+            round(sum(total_amount)/24,4) as avgAmount
+        FROM
+          activated_card_yesterday
+        where data_time = #{dataTime}
+        group by data_time
+    </select>
+
+    <!-- 激活金额 - 7日数据 -->
+    <select id="get7ActiveCard"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_day as theTime,
+            total_amount as totalCount
+        FROM
+          activated_card_seven
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 激活金额 - 7日总数 平均数 -->
+    <select id="get7ActiveCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            max(scope) as createTime,
+            sum(total_amount) as activieTotal,
+            round(sum(total_amount)/7,4) as avgAmount
+        FROM
+          activated_card_seven
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 激活金额 - 上一7个日总数 平均数 -->
+    <select id="getNext7ActiveCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            sum(total_amount) as activieTotal
+        FROM
+          activated_card_next_seven
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 激活金额 - 30日数据 -->
+    <select id="get30ActiveCard"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_day as theTime,
+            total_amount as totalCount
+        FROM
+          activated_card_thirty
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 激活金额 - 30日总数 平均数 -->
+    <select id="get30ActiveCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            max(scope) as createTime,
+            sum(total_amount) as activieTotal,
+            round(sum(total_amount)/30,4) as avgAmount
+        FROM
+          activated_card_thirty
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 激活金额 - 上一30个日总数 -->
+    <select id="getNext30ActiveCardTotal"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            sum(total_amount) as activieTotal
+        FROM
+          activated_card_next_thirty
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 激活金额 - 某月数据 -->
+    <select id="getMonthActiveCard"  parameterType="string" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_month as theTime,
+            total_amount as totalCount
+        FROM
+          activated_card_month
+        where the_month = #{theMonth}
+    </select>
+
+    <!-- 激活金额 - 12个月平均数 -->
+    <select id="get12MonthActiveCardAvg"  parameterType="map" resultType="com.sq.modules.bi.entity.vo.exchange.ExchangeCardTotalVo">
+        SELECT
+            min(the_month) as createTime,
+            round(sum(total_amount)/12,4) as avgAmount
+        FROM
+          activated_card_month
+        where the_month  &gt;= #{beginMonth}
+        and   the_month  &lt;= #{endMonth}
+    </select>
+
+    <!-- 激活金额 - 最近12个月数据 -->
+    <select id="get12MonthActiveCard"  parameterType="map" resultType="com.sq.modules.bi.entity.ExchangeCard">
+        SELECT
+            the_month as theTime,
+            total_amount as totalCount
+        FROM
+          activated_card_month
+        where the_month  &gt;= #{beginMonth}
+        and   the_month  &lt;= #{endMonth}
+        order by the_month
+    </select>
+
+    <!-- ..........................激活金额 结束............................. -->
+
+    <!-- ..........................激活卡数 开始............................. -->
+    <!-- 激活卡数 - 某日数据 -->
+    <select id="getActiveCardNum"  parameterType="string" resultType="com.sq.modules.bi.entity.ActiveCard">
+        SELECT
+            the_hr as theTime,
+            total_count as totalCount
+        FROM
+          activated_card_yesterday
+        where data_time = #{dataTime}
+    </select>
+
+    <!-- 激活卡数 - 某日总数 平均数 -->
+    <select id="getActiveCardTotalNum"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.active.ActiveCardTotalVo">
+        SELECT
+            data_time as createTime,
+            sum(total_count) as activieTotal,
+            round(sum(total_count)/24,4) as avgAmount
+        FROM
+          activated_card_yesterday
+        where data_time = #{dataTime}
+        group by data_time
+    </select>
+
+    <!-- 激活卡数 - 7日数据 -->
+    <select id="get7ActiveCardNum"  parameterType="string" resultType="com.sq.modules.bi.entity.ActiveCard">
+        SELECT
+            the_day as theTime,
+            total_count as totalCount
+        FROM
+          activated_card_seven
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 激活卡数 - 7日总数 平均数 -->
+    <select id="get7ActiveCardTotalNum"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.active.ActiveCardTotalVo">
+        SELECT
+            max(scope) as createTime,
+            sum(total_count) as activieTotal,
+            round(sum(total_count)/7,4) as avgAmount
+        FROM
+          activated_card_seven
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 激活卡数 - 上一7个日总数 平均数 -->
+    <select id="getNext7ActiveCardTotalNum"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.active.ActiveCardTotalVo">
+        SELECT
+            sum(total_count) as activieTotal
+        FROM
+          activated_card_next_seven
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 激活卡数 - 30日数据 -->
+    <select id="get30ActiveCardNum"  parameterType="string" resultType="com.sq.modules.bi.entity.ActiveCard">
+        SELECT
+            the_day as theTime,
+            total_count as totalCount
+        FROM
+          activated_card_thirty
+        where create_time = #{createTime}
+    </select>
+
+    <!-- 激活卡数 - 30日总数 平均数 -->
+    <select id="get30ActiveCardTotalNum"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.active.ActiveCardTotalVo">
+        SELECT
+            max(scope) as createTime,
+            sum(total_count) as activieTotal,
+            round(sum(total_count)/30,4) as avgAmount
+        FROM
+          activated_card_thirty
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 激活卡数 - 上一30个日总数 -->
+    <select id="getNext30ActiveCardTotalNum"  parameterType="string" resultType="com.sq.modules.bi.entity.vo.active.ActiveCardTotalVo">
+        SELECT
+            sum(total_count) as activieTotal
+        FROM
+          activated_card_next_thirty
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <!-- 激活卡数 - 某月数据 -->
+    <select id="getMonthActiveCardNum"  parameterType="string" resultType="com.sq.modules.bi.entity.ActiveCard">
+        SELECT
+            the_month as theTime,
+            total_count as totalCount
+        FROM
+          activated_card_month
+        where the_month = #{theMonth}
+    </select>
+
+    <!-- 激活卡数 - 12个月平均数 -->
+    <select id="get12MonthActiveCardAvgNum"  parameterType="map" resultType="com.sq.modules.bi.entity.vo.active.ActiveCardTotalVo">
+        SELECT
+            concat_ws('--',min(the_month),max(the_month)) as createTime,
+            round(sum(total_count)/12,4) as avgAmount
+        FROM
+          activated_card_month
+        where the_month  &gt;= #{beginMonth}
+        and   the_month  &lt;= #{endMonth}
+    </select>
+
+    <!-- 激活卡数 - 12个月数 -->
+    <select id="get12MonthActiveCardNum"  parameterType="map" resultType="com.sq.modules.bi.entity.ActiveCard">
+        SELECT
+            the_month as theTime,
+            total_count as totalCount
+        FROM
+          activated_card_month
+        where the_month  &gt;= #{beginMonth}
+        and   the_month  &lt;= #{endMonth}
+        order by the_month
+    </select>
+
+    <!-- ..........................激活卡数 结束............................. -->
+
+    <!-- ..........................定制卡top10 开始............................. -->
+    <!--  生成金额 top10	 -->
+    <select id="getCreateAmountTop10"   parameterType="string" resultType="com.sq.modules.bi.entity.BusinessMakeAmountRank">
+        SELECT
+            *
+        FROM  business_make_amount_rank
+        where create_time = #{createTime}
+        order by row_num  limit 10
+    </select>
+
+    <!--  激活金额 top10	 -->
+    <select id="getActiceAmountTop10"   parameterType="string" resultType="com.sq.modules.bi.entity.BusinessMakeAmountRank">
+        SELECT
+            *
+        FROM  business_activated_amount_rank
+        where create_time = #{createTime}
+        order by row_num  limit 10
+    </select>
+
+    <!--  兑换金额 top10	 -->
+    <select id="getExcahngeAmountTop10"   parameterType="string" resultType="com.sq.modules.bi.entity.BusinessMakeAmountRank">
+        SELECT
+            *
+        FROM  business_exchange_amount_rank
+        where create_time = #{createTime}
+        order by row_num  limit 10
+    </select>
+
+    <!--  生成数量 top10	 -->
+    <select id="getCreateCardTop10"   parameterType="string" resultType="com.sq.modules.bi.entity.BusinessMakeCardRank">
+        SELECT
+            *
+        FROM  business_make_card_rank
+        where create_time = #{createTime}
+        order by row_num  limit 10
+    </select>
+
+    <!--  激活卡数 top10	 -->
+    <select id="getExchangeCardTop10"   parameterType="string" resultType="com.sq.modules.bi.entity.BusinessMakeCardRank">
+        SELECT
+            *
+        FROM  business_activated_card_rank
+        where create_time = #{createTime}
+        order by row_num  limit 10
+    </select>
+    <!-- ..........................定制卡top10 结束............................. -->
+
+
+
+    <!-- ..............BI 2.0....gl........商品兑换排行榜-数量-开始.. 下面row_num之所以乘1是因为row_num是字符类型，要转化成int类型再排序！ ........................... -->
+    <select id="getExchangeQuantityAllYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+          case
+            when deduction = 0 then '好品购'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+          else '未知'
+          end deduction,
+          row_num as rowNum,
+          sku_name as commodityName,
+          sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_all_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityAll7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+          case
+            when deduction = 0 then '好品购'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+          else '未知'
+          end deduction,
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_all_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityAll30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+          case
+            when deduction = 0 then '好品购'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+          else '未知'
+          end deduction,
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_all_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityAllCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+          case
+            when deduction = 0 then '好品购'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+          else '未知'
+          end deduction,
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_all
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getExchangeQuantityGPYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_haopingou_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityGP7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_haopingou_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityGP30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_haopingou_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityGPCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_haopingou
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getExchangeQuantityTBYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_haopingou_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityTB7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_taobao_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityTB30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_taobao_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityTBCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_taobao
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getExchangeQuantityTMYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_tianmiao_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityTM7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_tianmiao_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityTM30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_tianmiao_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityTMCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_tianmiao
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getExchangeQuantityJDYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_jd_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityJD7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_jd_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityJD30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_jd_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityJDCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_jd
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getExchangeQuantityPDDYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_pindd_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityPDD7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_pindd_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityPDD30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_pindd_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getExchangeQuantityPDDCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_goods_rank_pindd
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <!-- ..........................商品兑换排行榜-数量-结束............................. -->
+
+
+
+
+
+
+
+    <!-- ..............BI 2.0....gl........商品兑换排行榜-金额-开始.. 下面row_num之所以乘1是因为row_num是字符类型，要转化成int类型再排序！ ........................... -->
+
+    <select id="getCommodityExchangeAmountAllYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+          case
+            when deduction = 0 then '好品购'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+          else '未知'
+          end deduction,
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_all_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountAll7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+          case
+            when deduction = 0 then '好品购'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+          else '未知'
+          end deduction,
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_all_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountAll30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+          case
+            when deduction = 0 then '好品购'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+          else '未知'
+          end deduction,
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_all_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountAllCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+          case
+            when deduction = 0 then '好品购'
+            when deduction = 1 then '京东'
+            when deduction = 3 then '淘宝'
+            when deduction = 4 then '天猫'
+            when deduction = 11 then '拼多多'
+          else '未知'
+          end deduction,
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_all
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getCommodityExchangeAmountGPYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_haopingou_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountGP7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_haopingou_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountGP30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_haopingou_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountGPCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_haopingou
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getCommodityExchangeAmountTBYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_haopingou_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountTB7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_taobao_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountTB30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_taobao_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountTBCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_taobao
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getCommodityExchangeAmountTMYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_tianmiao_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountTM7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_tianmiao_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountTM30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_tianmiao_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountTMCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_tianmiao
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getCommodityExchangeAmountJDYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_jd_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountJD7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_jd_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountJD30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_jd_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountJDCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_jd
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+
+    <select id="getCommodityExchangeAmountPDDYesterday"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_pindd_yesterday
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountPDD7Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_pindd_seven
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountPDD30Day"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_pindd_thirty
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+
+    <select id="getCommodityExchangeAmountPDDCumulativeDay"   parameterType="string" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        row_num as rowNum,
+        sku_name as commodityName,
+        sku_count as exchangeAmout
+        FROM  exchanged_amount_rank_pindd
+        where create_time = #{createTime}
+        order by row_num * 1  limit 10
+    </select>
+    <!-- ..........................商品兑换排行榜-金额-结束............................. -->
+
+    <!-- ..........................商品支付排行榜-金额-开始............................. -->
+    <select id="getExchangePaymentInfo"   parameterType="map" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        deduction as deduction,
+        dedu_name as deduName,
+        rank as rowNum,
+        title as commodityName,
+        FLOOR(payment_amount) as exchangeAmout
+        FROM  payment_amount_rank
+        where create_time = #{date} and dedu = #{dedu_name} and the_date = #{the_date_name}
+        order by rank * 1  limit 10
+    </select>
+    <!-- ..........................商品支付排行榜-金额-结束............................. -->
+
+
+    <!-- ..........................商品支付排行榜-数量-开始............................. -->
+    <select id="getExchangePaymentNumberInfo"   parameterType="map" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        deduction as deduction,
+        rank as rowNum,
+        title as commodityName,
+        payment_amount as exchangeAmout
+        FROM  payment_count_rank
+        where create_time = #{date} and dedu = #{dedu_name} and the_date = #{the_date_name}
+        order by rank * 1  limit 10
+    </select>
+    <!-- ..........................商品支付排行榜-数量-结束............................. -->
+
+
+    <!-- ..........................商品结算佣金排行榜-金额-开始............................. -->
+    <select id="getSettlementCommissionInfo"   parameterType="map" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        deduction as deduction,
+        rank as rowNum,
+        title as commodityName,
+        payment_amount as exchangeAmout
+        FROM  commission_amount_rank
+        where create_time = #{date} and dedu = #{dedu_name}
+        order by rank * 1  limit 10
+    </select>
+    <!-- ..........................商品结算佣金排行榜-金额-结束............................. -->
+
+
+    <!-- ..........................商品结算佣金排行榜-数量-开始............................. -->
+    <select id="getSettlementCommissionNumberInfo"   parameterType="map" resultType="com.sq.modules.bi.entty2.Ranking.ExchangeQuantity">
+        SELECT
+        deduction as deduction,
+        rank as rowNum,
+        title as commodityName,
+        payment_amount as exchangeAmout
+        FROM  commission_count_rank
+        where create_time = #{date} and dedu = #{dedu_name}
+        order by rank * 1  limit 10
+    </select>
+    <!-- ..........................商品结算佣金排行榜-数量-结束............................. -->
+
+
+    <!-- ..........................注册用户数-开始........ 注意date_time 字段和create_time字段区别！ ..................... -->
+    <select id="getActiveUsersNum"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.ActiveUser">
+        SELECT
+        the_hr as theTime,
+        total_count as totalCount
+        FROM
+        registered_customer_yesterday
+        where data_time = #{dataTime} order by the_hr * 1
+    </select>
+
+
+    <select id="get7ActiveUsersNum"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.ActiveUser">
+        SELECT
+        the_date as theTime,
+        total_count as totalCount
+        FROM
+        registered_customer_seven
+        where create_time = #{create_time} order by the_date
+    </select>
+
+    <select id="get30ActiveUsersNum"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.ActiveUser">
+        SELECT
+            the_date as theTime,
+            total_count as totalCount
+        FROM
+        registered_customer_thirty
+        where create_time = #{create_time} order by the_date
+    </select>
+
+    <select id="getMonthActiveUsersNum"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.ActiveUser">
+        SELECT
+        the_mouth as theTime,
+        total_count as totalCount
+        FROM
+        registered_customer_month
+        where the_mouth = #{theMonth}
+    </select>
+
+    <select id="getActiveUsersTotalNum"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.ActiveSum">
+        SELECT
+        data_time as createTime,
+        sum(total_count) as activieTotal,
+        round(sum(total_count)/24,4) as avgAmount
+        FROM
+        registered_customer_yesterday
+        where data_time = #{dataTime}
+        group by data_time
+    </select>
+
+    <select id="get7ActiveUsersTotalNum"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.ActiveSum">
+        SELECT
+        max(scope) as createTime,
+        sum(total_count) as activieTotal,
+        round(sum(total_count)/7,4) as avgAmount
+        FROM
+        registered_customer_seven
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+
+    <select id="get30ActiveUsersTotalNum"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.ActiveSum">
+        SELECT
+        max(scope) as createTime,
+        sum(total_count) as activieTotal,
+        round(sum(total_count)/30,4) as avgAmount
+        FROM
+        registered_customer_thirty
+        where create_time = #{createTime}
+        group by create_time
+    </select>
+
+    <select id="get12MonthActiveUsersAvgNum"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.ActiveSum">
+        select
+          round(sum(total_count)/12,4) as avgAmount
+        from registered_customer_month
+        where create_time = #{createTime}
+        GROUP BY create_time
+    </select>
+
+    <select id="get12MonthActiveUsersNum"  parameterType="map" resultType="com.sq.modules.bi.entty2.user.ActiveUser">
+        SELECT
+        the_mouth as theTime,
+        total_count as totalCount
+        FROM
+        registered_customer_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth} order by the_mouth
+    </select>
+    <!-- ..........................注册用户数-结束........ 注意date_time 字段和create_time字段区别！ ..................... -->
+
+
+    <!-- ..........................各平台兑换、支付趋势分析-兑换人数-开始............................. -->
+    <select id="getPlatformNumber"  parameterType="map" resultType="com.sq.modules.bi.entty2.user.platforms.Exchange">
+        SELECT
+        the_hr as theTime,
+        exchange_count as totalCount
+        FROM
+        analysis_platform_exchange_yesterday
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7PlatformNumber"  parameterType="map" resultType="com.sq.modules.bi.entty2.user.platforms.Exchange">
+        SELECT
+        the_date as theTime,
+        exchange_count as totalCount
+        FROM
+        analysis_platform_exchange_seven
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get30PlatformNumber"  parameterType="map" resultType="com.sq.modules.bi.entty2.user.platforms.Exchange">
+        SELECT
+        the_date as theTime,
+        exchange_count as totalCount
+        FROM
+        analysis_platform_exchange_thirty
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get12PlatformNumber"  parameterType="map" resultType="com.sq.modules.bi.entty2.user.platforms.Exchange">
+        SELECT
+        the_mouth as theTime,
+        exchange_count as totalCount
+        FROM
+        analysis_platform_exchange_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        and   deduction = #{deduction}
+        order by the_mouth
+    </select>
+    <!-- ..........................各平台兑换、支付趋势分析-兑换人数-结束............................. -->
+
+
+    <!-- ..........................各平台兑换、支付趋势分析-支付人数-开始............................. -->
+    <select id="getPaymentNumber"  parameterType="map" resultType="com.sq.modules.bi.entty2.user.platforms.Exchange">
+        SELECT
+        the_hr as theTime,
+        payment_count as totalCount
+        FROM
+        payment_platform_yesterday
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7PaymentNumber"  parameterType="map" resultType="com.sq.modules.bi.entty2.user.platforms.Exchange">
+        SELECT
+        the_date as theTime,
+        payment_count as totalCount
+        FROM
+        payment_platform_seven
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get30PaymentNumber"  parameterType="map" resultType="com.sq.modules.bi.entty2.user.platforms.Exchange">
+        SELECT
+        the_date as theTime,
+        payment_count as totalCount
+        FROM
+        payment_platform_thirty
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get12PaymentNumber"  parameterType="map" resultType="com.sq.modules.bi.entty2.user.platforms.Exchange">
+        SELECT
+        the_mouth as theTime,
+        payment_count as totalCount
+        FROM
+        payment_platform_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        and   deduction = #{deduction}
+        order by the_mouth
+    </select>
+    <!-- ..........................各平台兑换、支付趋势分析-支付人数-结束............................. -->
+
+    <!-- ..........................用户账户余额人数统计-开始............................. -->
+    <select id="getUserAccount"  parameterType="string" resultType="com.sq.modules.bi.entty2.vo.UserCountTwo">
+        SELECT
+        amount_name,
+        total
+        FROM
+        customer_account_balance
+        where create_time = #{date} and amount_name is not null
+        order by amount_sort * 1
+    </select>
+    <!-- ..........................用户账户余额人数统计-结束............................. -->
+
+    <!-- ..........................用户账户余额为0元趋势分析-开始............................. -->
+    <select id="getbalanceAnalyze"  parameterType="map" resultType="com.sq.modules.bi.entty2.vo.TrendAnalysisTwo">
+        SELECT
+        create_time as createTime,
+        create_day as day,
+        total
+        FROM
+        analysis_customer_account
+        where create_time &gt;= #{startDate}  and create_time &lt;= #{endDate}
+        order by create_day
+    </select>
+    <!-- ..........................用户账户余额为0元趋势分析-结束............................. -->
+
+
+
+    <!-- ..........................用户关键流程漏斗分析-开始............................. -->
+    <select id="getUserKeyFlow"  parameterType="string" resultType="com.sq.modules.bi.entty2.vo.UserKeyFlowTwo">
+        SELECT
+        registered_count as regUser,
+        activated_count as activeUser,
+        exchange_count as exchangeUser,
+        payment_count as paymentUser
+        FROM
+        customer_process_analysis
+        where create_time = #{date}
+    </select>
+    <!-- ..........................用户关键流程漏斗分析-结束............................. -->
+
+
+    <!-- ..........................兑换、支付频次人数分布-开始............................. -->
+    <select id="getFrequencyAnalyzeExchange"  parameterType="string" resultType="com.sq.modules.bi.entty2.vo.FrequencyAnalyzeTwo">
+        SELECT
+          deduction_count as deductionCount,
+          total_customer as totalCustomer
+        FROM
+          exchange_frequency
+        where create_time = #{createTime}
+        ORDER BY  rank_num * 1
+    </select>
+
+
+    <select id="getFrequencyAnalyzePay"  parameterType="string" resultType="com.sq.modules.bi.entty2.vo.FrequencyAnalyzeTwo">
+        SELECT
+        paymenttimes as deductionCount,
+        total_customer as totalCustomer
+        FROM
+        payment_frequency
+        where create_time = #{date}
+        order by rank_num * 1
+    </select>
+    <!-- ..........................兑换、支付频次人数分布-结束............................. -->
+
+
+    <!-- ..........................激活/兑换/支付人数-开始............................ -->
+    <select id="getActExgPayUserInfoAct"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_hr as theTime,
+        activated_count as totalCount
+        FROM
+        activated_yesterday
+        where create_time = #{date}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7ActExgPayUserInfoAct"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_date as theTime,
+        activated_count as totalCount
+        FROM
+        activated_seven
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get30ActExgPayUserInfoAct"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_date as theTime,
+        activated_count as totalCount
+        FROM
+        activated_thirty
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get12ActExgPayUserInfoAct"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_mouth as theTime,
+        activated_count as totalCount
+        FROM
+        activated_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        order by the_mouth
+    </select>
+
+
+    <select id="getActExgPayUserInfoExg"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_hr as theTime,
+        exchange_count as totalCount
+        FROM
+        analysis_exchange_yesterday
+        where create_time = #{date}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7ActExgPayUserInfoExg"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_date as theTime,
+        exchange_count as totalCount
+        FROM
+        analysis_exchange_seven
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get30ActExgPayUserInfoExg"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_date as theTime,
+        exchange_count as totalCount
+        FROM
+        analysis_exchange_thirty
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get12ActExgPayUserInfoExg"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_mouth as theTime,
+        exchange_count as totalCount
+        FROM
+        analysis_exchange_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        order by the_mouth
+    </select>
+
+
+    <select id="getActExgPayUserInfoPay"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_hr as theTime,
+        payment_count as totalCount
+        FROM
+        payment_yesterday
+        where create_time = #{date}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7ActExgPayUserInfoPay"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_date as theTime,
+        payment_count as totalCount
+        FROM
+        payment_seven
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get30ActExgPayUserInfoPay"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_date as theTime,
+        payment_count as totalCount
+        FROM
+        payment_thirty
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get12ActExgPayUserInfoPay"  parameterType="string" resultType="com.sq.modules.bi.entty2.user.activation.ActExgPayUserThree">
+        SELECT
+        the_mouth as theTime,
+        payment_count as totalCount
+        FROM
+        payment_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        order by the_mouth
+    </select>
+    <!-- ..........................激活/兑换/支付人数-结束............................. -->
+
+
+    <!-- ..........................兑换/支付次数-开始............................. -->
+    <select id="getExgTimesInfoDao"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayTimesThree">
+        SELECT
+        the_hr as theTime,
+        exchange_times as totalCount
+        FROM
+        analysis_exchange_yesterday
+        where create_time = #{date}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7ExgTimesInfoDao"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayTimesThree">
+        SELECT
+        the_date as theTime,
+        exchange_times as totalCount
+        FROM
+        analysis_exchange_seven
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get30ExgTimesInfoDao"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayTimesThree">
+        SELECT
+        the_date as theTime,
+        exchange_times as totalCount
+        FROM
+        analysis_exchange_thirty
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get12ExgTimesInfoDao"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayTimesThree">
+        SELECT
+        the_mouth as theTime,
+        exchange_times as totalCount
+        FROM
+        analysis_exchange_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        order by the_mouth
+    </select>
+
+    <select id="getPayTimesInfoDao"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayTimesThree">
+        SELECT
+        the_hr as theTime,
+        payment_times as totalCount
+        FROM
+        payment_yesterday
+        where create_time = #{date}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7PayTimesInfoDao"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayTimesThree">
+        SELECT
+        the_date as theTime,
+        payment_times as totalCount
+        FROM
+        payment_seven
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get30PayTimesInfoDao"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayTimesThree">
+        SELECT
+        the_date as theTime,
+        payment_times as totalCount
+        FROM
+        payment_thirty
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get12PayTimesInfoDao"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayTimesThree">
+        SELECT
+        the_mouth as theTime,
+        payment_times as totalCount
+        FROM
+        payment_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        order by the_mouth
+    </select>
+    <!-- ..........................兑换/支付次数-结束............................. -->
+
+    <!-- ..........................兑换/支付/预估佣金金额-开始........................... -->
+    <select id="getExgPayEstAmountInfoExg"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_hr as theTime,
+        FLOOR(exchange_amount) as totalCount
+        FROM
+        analysis_exchange_yesterday
+        where create_time = #{date}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7ExgPayEstAmountInfoExg"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(exchange_amount) as totalCount
+        FROM
+        analysis_exchange_seven
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get30ExgPayEstAmountInfoExg"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(exchange_amount) as totalCount
+        FROM
+        analysis_exchange_thirty
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get12ExgPayEstAmountInfoExg"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_mouth as theTime,
+        FLOOR(exchange_amount) as totalCount
+        FROM
+        analysis_exchange_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        order by the_mouth
+    </select>
+
+    <select id="getExgPayEstAmountInfoPay"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_hr as theTime,
+        FLOOR(payment_amount) as totalCount
+        FROM
+        payment_yesterday
+        where create_time = #{date}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7ExgPayEstAmountInfoPay"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(payment_amount) as totalCount
+        FROM
+        payment_seven
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get30ExgPayEstAmountInfoPay"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(payment_amount) as totalCount
+        FROM
+        payment_thirty
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get12ExgPayEstAmountInfoPay"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_mouth as theTime,
+        FLOOR(payment_amount) as totalCount
+        FROM
+        payment_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        order by the_mouth
+    </select>
+
+    <select id="getExgPayEstAmountInfoEst"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_hr as theTime,
+        FLOOR(estimate_price) as totalCount
+        FROM
+        all_estimate_price_yesterday
+        where create_time = #{date}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7ExgPayEstAmountInfoEst"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(estimate_price) as totalCount
+        FROM
+        all_estimate_price_seven
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get30ExgPayEstAmountInfoEst"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(estimate_price) as totalCount
+        FROM
+        all_estimate_price_thirty
+        where create_time = #{date}
+        order by the_date
+    </select>
+
+    <select id="get12ExgPayEstAmountInfoEst"  parameterType="string" resultType="com.sq.modules.bi.entty2.transaction.ExgPayEstAmountThree">
+        SELECT
+        the_mouth as theTime,
+        FLOOR(estimate_price) as totalCount
+        FROM
+        all_estimate_price_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        order by the_mouth
+    </select>
+    <!-- ..........................兑换/支付/预估佣金金额-结束............................. -->
+
+
+    <!-- ..........................兑换/支付/预估佣金金额-兑换金额-开始............................. -->
+    <select id="getTrendExhangeAmount"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_hr as theTime,
+        FLOOR(exchange_amount) as totalCount
+        FROM
+        analysis_platform_exchange_yesterday
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7TrendExhangeAmount"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(exchange_amount) as totalCount
+        FROM
+        analysis_platform_exchange_seven
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get30TrendExhangeAmount"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(exchange_amount) as totalCount
+        FROM
+        analysis_platform_exchange_thirty
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get12TrendExhangeAmount"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_mouth as theTime,
+        FLOOR(exchange_amount) as totalCount
+        FROM
+        analysis_platform_exchange_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        and   deduction = #{deduction}
+        order by the_mouth
+    </select>
+    <!-- ..........................兑换/支付/预估佣金金额-兑换金额-结束............................. -->
+
+
+
+    <!-- ..........................兑换/支付/预估佣金金额-支付金额-开始............................. -->
+    <select id="getTrendPayAmount"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_hr as theTime,
+        FLOOR(payment_amount) as totalCount
+        FROM
+        payment_platform_yesterday
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7TrendPayAmount"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(payment_amount) as totalCount
+        FROM
+        payment_platform_seven
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get30TrendPayAmount"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(payment_amount) as totalCount
+        FROM
+        payment_platform_thirty
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get12TrendPayAmount"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_mouth as theTime,
+        FLOOR(payment_amount) as totalCount
+        FROM
+        payment_platform_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        and   deduction = #{deduction}
+        order by the_mouth
+    </select>
+    <!-- ..........................兑换/支付/预估佣金金额-支付金额-结束............................. -->
+
+
+    <!-- ..........................兑换/支付/预估佣金金额-预估佣金-开始............................. -->
+    <select id="getTrendEstAmountInfo"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_hr as theTime,
+        FLOOR(estimate_price) as totalCount
+        FROM
+        all_estimate_platform_yesterday
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7TrendEstAmountInfo"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(estimate_price) as totalCount
+        FROM
+        all_estimate_platform_seven
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get30TrendEstAmountInfo"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        FLOOR(estimate_price) as totalCount
+        FROM
+        all_estimate_platform_thirty
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get12TrendEstAmountInfo"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_mouth as theTime,
+        FLOOR(estimate_price) as totalCount
+        FROM
+        all_estimate_platform_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        and   deduction = #{deduction}
+        order by the_mouth
+    </select>
+    <!-- ..........................兑换/支付/预估佣金金额-预估佣金-结束............................. -->
+
+
+    <!-- ..........................兑换/支付/预估佣金金额-兑换次数-开始............................. -->
+    <select id="getTrendExchangTimes"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_hr as theTime,
+        exchange_times as totalCount
+        FROM
+        analysis_platform_exchange_yesterday
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7TrendExchangTimes"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        exchange_times as totalCount
+        FROM
+        analysis_platform_exchange_seven
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get30TrendExchangTimes"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        exchange_times as totalCount
+        FROM
+        analysis_platform_exchange_thirty
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get12TrendExchangTimes"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_mouth as theTime,
+        exchange_times  as totalCount
+        FROM
+        analysis_platform_exchange_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        and   deduction = #{deduction}
+        order by the_mouth
+    </select>
+    <!-- ..........................兑换/支付/预估佣金金额-兑换次数-结束............................. -->
+
+
+
+
+    <!-- ..........................兑换/支付/预估佣金金额-支付比数-开始............................. -->
+    <select id="getTrendPayTimesInfo"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_hr as theTime,
+        payment_times as totalCount
+        FROM
+        payment_platform_yesterday
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_hr * 1
+    </select>
+
+    <select id="get7TrendPayTimesInfo"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        payment_times as totalCount
+        FROM
+        payment_platform_seven
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get30TrendPayTimesInfo"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_date as theTime,
+        payment_times as totalCount
+        FROM
+        payment_platform_thirty
+        where create_time = #{date}
+        and   deduction = #{deduction}
+        order by the_date
+    </select>
+
+    <select id="get12TrendPayTimesInfo"  parameterType="map" resultType="com.sq.modules.bi.entty2.transaction.branch.TrendExhangeAmountThree">
+        SELECT
+        the_mouth as theTime,
+        payment_times  as totalCount
+        FROM
+        payment_platform_month
+        where the_mouth  &gt;= #{beginMonth}
+        and   the_mouth  &lt;= #{endMonth}
+        and   deduction = #{deduction}
+        order by the_mouth
+    </select>
+    <!-- ..........................兑换/支付/预估佣金金额-支付比数-结束............................. -->
+
+
+    <!-- ..........................各平台兑换、支付、佣金占比分析-开始............................. -->
+    <select id="getPlatformExgPayRateInfoDH"  parameterType="string" resultType="com.sq.modules.bi.entty2.vo.PlatformExgPayRateFour">
+        SELECT
+        FLOOR(total_amount) as price,
+        FLOOR(total_count) as numbers
+        FROM
+        exchanged_amount_statistics
+        where create_time = #{date}
+        order by deduction * 1
+    </select>
+
+    <select id="getPlatformExgPayRateInfoZF"  parameterType="string" resultType="com.sq.modules.bi.entty2.vo.PlatformExgPayRateFour">
+        SELECT
+        FLOOR(payment_amount) as price,
+        FLOOR(payment_times) as numbers
+        FROM
+        payment_amount_statistics
+        where create_time = #{date}
+        order by deduction * 1
+    </select>
+
+    <select id="getPlatformExgPayRateInfoYJYJ"  parameterType="string" resultType="com.sq.modules.bi.entty2.vo.PlatformExgPayRateFour">
+        SELECT
+        FLOOR(estimate_price) as price,
+        FLOOR(payment_times) as numbers
+        FROM
+        estimate_amount_statistics
+        where create_time = #{date}
+        order by deduction * 1
+    </select>
+
+    <select id="getPlatformExgPayRateInfoYJ"  parameterType="string" resultType="com.sq.modules.bi.entty2.vo.PlatformExgPayRateFour">
+        SELECT
+        FLOOR(payment_amount) as price,
+        FLOOR(payment_times) as numbers
+        FROM
+        commission_amount_statistics
+        where create_time = #{date}
+        order by deduction * 1
+    </select>
+    <!-- ..........................各平台兑换、支付、佣金占比分析-结束............................. -->
+
+
+
+</mapper>

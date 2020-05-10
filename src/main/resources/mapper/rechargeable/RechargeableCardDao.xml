@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sq.modules.rechargeable.dao.RechargeableCardDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.sq.modules.rechargeable.entity.RechargeableCardEntity" id="rechargeableCardMap">
+        <result property="id" column="id"/>
+        <result property="managerId" column="manager_id"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="cardNo" column="card_no"/>
+        <result property="cardPwd" column="card_pwd"/>
+        <result property="bdId" column="bd_id"/>
+        <result property="activationState" column="activation_state"/>
+        <result property="failureTime" column="failure_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="createId" column="create_id"/>
+        <result property="updateId" column="update_id"/>
+        <result property="remarks" column="remarks"/>
+        <result property="version" column="version"/>
+        <result property="enable" column="enable"/>
+    </resultMap>
+
+
+    <select id="selectByCordNoAndcardPwd" parameterType="hashmap" resultMap="rechargeableCardMap">
+        SELECT
+        c.*
+        FROM
+        b_rechargeable_card c
+        INNER JOIN b_rechargeable_mgr m ON c.manager_id = m.id
+        WHERE
+        m.face_value = #{faceValue}
+        AND c.card_no = #{cardNo}
+        AND c.card_pwd = #{cardPwd}
+
+    </select>
+
+    <update id="updateActivity" parameterType="String">
+        UPDATE b_rechargeable_card
+        SET activation_state = 1
+        WHERE
+        card_no = #{cardNo}
+
+    </update>
+
+
+</mapper>
